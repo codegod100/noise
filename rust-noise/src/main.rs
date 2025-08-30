@@ -1,11 +1,34 @@
 use rand::Rng;
-use softbuffer::Surface;
-use std::num::NonZeroU32;
-use std::rc::Rc;
-use winit::application::ApplicationHandler;
-use winit::event::WindowEvent;
-use winit::event_loop::{ActiveEventLoop, EventLoop};
-use winit::window::{Window, WindowId};
+use std::ffi::c_void;
+
+// Fenster C API bindings
+#[repr(C)]
+pub struct Fenster {
+    pub title: *const i8,
+    pub width: i32,
+    pub height: i32,
+    pub buf: *mut u32,
+    pub keys: [i32; 256],
+    pub modifier: i32,
+    pub x: i32,
+    pub y: i32,
+    pub mouse: i32,
+}
+
+extern "C" {
+    fn fenster_open(f: *mut Fenster) -> i32;
+    fn fenster_loop(f: *mut Fenster) -> i32;
+    fn fenster_close(f: *mut Fenster);
+    fn fenster_time() -> i64;
+}
+
+macro_rules! fenster_pixel {
+    ($f:expr, $x:expr, $y:expr) => {
+        unsafe {
+            &mut *($f.buf.offset(($y * $f.width + $x) as isize))
+        }
+    };
+}
 
 const W: usize = 320;
 const H: usize = 240;
